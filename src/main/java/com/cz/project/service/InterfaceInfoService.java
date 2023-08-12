@@ -18,5 +18,7 @@ public interface InterfaceInfoService extends IService<InterfaceInfo> {
      */
     void validInterfaceInfo(InterfaceInfo interfaceInfo, boolean add);
 
+
+
 }
 

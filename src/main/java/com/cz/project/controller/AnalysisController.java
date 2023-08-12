@@ -45,7 +45,7 @@ public class AnalysisController {
      *
      * @return
      */
-    @GetMapping("/analysis")
+    @GetMapping("/top/interface/invoke")
     public BaseResponse<List<InterfaceInfoVO>> listTopInvokeInterfaceInfo() {
         List<UserInterfaceInfo> userInterfaceInfos = userInterfaceInfoMapper.listTopInvokeInterfaceInfo(3);
         Map<Long, List<UserInterfaceInfo>> interfaceInfoIdObjMap  = userInterfaceInfos

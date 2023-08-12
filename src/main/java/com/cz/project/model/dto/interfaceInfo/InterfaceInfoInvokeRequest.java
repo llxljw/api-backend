@@ -8,10 +8,7 @@ import java.io.Serializable;
 
 
 /**
- * 查询请求
- *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
- * @from <a href="https://yupi.icu">编程导航知识星球</a>
+ * 测试调用请求
  */
 @Data
 public class InterfaceInfoInvokeRequest implements Serializable {
@@ -19,13 +16,19 @@ public class InterfaceInfoInvokeRequest implements Serializable {
     /**
      * 主键
      */
-    @TableId(value = "id", type = IdType.AUTO)
     private Long id;
-
     /**
-     * 接口请求参数
+     * 请求方法
+     */
+    private String method;
+    /**
+     * 请求参数
      */
     private String userRequestParams;
+    /**
+     * 主机号
+     */
+    private String host;
 
 
     private static final long serialVersionUID = 1L;

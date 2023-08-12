@@ -1,5 +1,6 @@
 package com.cz.project.controller;
 
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.cz.czapiclientsdk.client.CzApiClient;
@@ -180,26 +181,35 @@ public class InterfaceInfoController {
     /**
      * 发布接口（仅管理员）
      *
-     * @param idRequest
+     * @param interfaceInfoInvokeRequest
      * @param request
      * @return
      */
     @PostMapping("/online")
     @AuthCheck(mustRole = "admin")
-    public BaseResponse<Boolean> onlineInterfaceInfo(@RequestBody IdRequest idRequest, HttpServletRequest request) {
-        if (idRequest == null || idRequest.getId() < 0) {
+    public BaseResponse<Boolean> onlineInterfaceInfo(@RequestBody InterfaceInfoInvokeRequest interfaceInfoInvokeRequest, HttpServletRequest request) {
+        if (interfaceInfoInvokeRequest == null || interfaceInfoInvokeRequest.getId() < 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        long id = idRequest.getId();
+        long id = interfaceInfoInvokeRequest.getId();
+        String requestParams = interfaceInfoInvokeRequest.getUserRequestParams();
+        // 判断参数是否为空
+        if (StrUtil.isBlank(requestParams)){
+            requestParams = "online";
+        }
         // 判断是否存在
         InterfaceInfo oldInterfaceInfo = interfaceInfoService.getById(id);
         ThrowUtils.throwIf(oldInterfaceInfo == null, ErrorCode.NOT_FOUND_ERROR);
 
         // 判断是否能成功调用
-        com.cz.czapiclientsdk.model.User user = new com.cz.czapiclientsdk.model.User();
-        user.setName("czTest");
-        String userNameByPost = czApiClient.getUserNameByPost(user);
-        ThrowUtils.throwIf(StringUtils.isBlank(userNameByPost),ErrorCode.SYSTEM_ERROR);
+//        com.cz.czapiclientsdk.model.User user = new com.cz.czapiclientsdk.model.User();
+//        user.setName("czTest");
+        User loginUser = userService.getLoginUser(request);
+        String accessKey = loginUser.getAccessKey();
+        String secretKey = loginUser.getSecretKey();
+        CzApiClient czApiClient = new CzApiClient(accessKey,secretKey);
+        String invokeResult  = czApiClient.onlineInvoke(requestParams,oldInterfaceInfo.getUrl());
+        ThrowUtils.throwIf(StringUtils.isBlank(invokeResult ),ErrorCode.SYSTEM_ERROR);
 
         // 修改status为开启
         InterfaceInfo interfaceInfo = new InterfaceInfo();
@@ -256,13 +266,15 @@ public class InterfaceInfoController {
 
         // 判断是否下线
         ThrowUtils.throwIf(oldInterfaceInfo.getStatus() == InterfaceInfoStatusEnum.OFFLINE.getValue(),ErrorCode.PARAMS_ERROR,"接口已下线");
+        String url = oldInterfaceInfo.getUrl();
         User loginUser = userService.getLoginUser(request);
         String accessKey = loginUser.getAccessKey();
         String secretKey = loginUser.getSecretKey();
         CzApiClient czApiClient = new CzApiClient(accessKey,secretKey);
         Gson gson = new Gson();
-        com.cz.czapiclientsdk.model.User user = gson.fromJson(requestParams,com.cz.czapiclientsdk.model.User.class);
-        String res = czApiClient.getUserNameByPost(user);
+//        com.cz.czapiclientsdk.model.User user = gson.fromJson(requestParams,com.cz.czapiclientsdk.model.User.class);
+//        String res = czApiClient.getUserNameByPost(user);
+        String res = czApiClient.onlineInvoke(requestParams, url);
         return ResultUtils.success(res);
     }
 }

@@ -118,4 +118,10 @@ public interface UserService extends IService<User> {
      */
     QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 
+    /**
+     * 根据账号分配接口调用次数
+     * @param userAccount
+     */
+    void allocationInterfaceInfoCounts(String userAccount);
+
 }

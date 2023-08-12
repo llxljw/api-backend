@@ -2,6 +2,7 @@ package com.cz.project.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.cz.czapicommon.model.entity.InterfaceInfo;
 import com.cz.czapicommon.model.entity.User;
 import com.cz.czapicommon.model.entity.UserInterfaceInfo;
 import com.cz.project.annotation.AuthCheck;
@@ -16,6 +17,8 @@ import com.cz.project.exception.ThrowUtils;
 import com.cz.project.model.dto.userInterfaceInfo.UserInterfaceInfoAddRequest;
 import com.cz.project.model.dto.userInterfaceInfo.UserInterfaceInfoQueryRequest;
 import com.cz.project.model.dto.userInterfaceInfo.UserInterfaceInfoUpdateRequest;
+import com.cz.project.model.vo.SelfInterfaceDateVo;
+import com.cz.project.service.InterfaceInfoService;
 import com.cz.project.service.UserInterfaceInfoService;
 import com.cz.project.service.UserService;
 import com.google.gson.Gson;
@@ -26,6 +29,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 用户调用次数统计接口
@@ -41,6 +46,9 @@ public class UserInterfaceInfoController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private InterfaceInfoService interfaceInfoService;
 
 
     private final static Gson GSON = new Gson();
@@ -166,6 +174,32 @@ public class UserInterfaceInfoController {
                 sortOrder.equals(CommonConstant.SORT_ORDER_ASC), sortField);
         Page<UserInterfaceInfo> userInterfaceInfoPage = userInterfaceInfoService.page(new Page<>(current, size), queryWrapper);
         return ResultUtils.success(userInterfaceInfoPage);
+    }
+
+    /**
+     * 用户获取自己的接口调用情况
+     *
+     * @param request
+     * @return
+     */
+    @GetMapping("/selfInterfaceData")
+    public BaseResponse<List<SelfInterfaceDateVo>> selfInterfaceData(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        Long userId = loginUser.getId();
+        QueryWrapper<UserInterfaceInfo> qw = new QueryWrapper<>();
+        qw.eq("userId",userId);
+        List<UserInterfaceInfo> userInterfaceInfoList = userInterfaceInfoService.list(qw);
+        List<SelfInterfaceDateVo> userInterfaceInfoVoList = userInterfaceInfoList.stream().map(userInterfaceInfo -> {
+            SelfInterfaceDateVo userInterfaceInfoVo = new SelfInterfaceDateVo();
+            BeanUtils.copyProperties(userInterfaceInfo, userInterfaceInfoVo);
+            Long interfaceInfoId = userInterfaceInfo.getInterfaceInfoId();
+            QueryWrapper<InterfaceInfo> qwu = new QueryWrapper<>();
+            qwu.eq("id", interfaceInfoId);
+            InterfaceInfo interfaceInfo = interfaceInfoService.getOne(qwu);
+            userInterfaceInfoVo.setInterfaceName(interfaceInfo.getName());
+            return userInterfaceInfoVo;
+        }).collect(Collectors.toList());
+        return ResultUtils.success(userInterfaceInfoVoList);
     }
 
 }

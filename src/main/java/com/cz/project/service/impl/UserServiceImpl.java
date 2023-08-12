@@ -5,13 +5,17 @@ import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.cz.czapicommon.model.entity.InterfaceInfo;
 import com.cz.czapicommon.model.entity.User;
+import com.cz.czapicommon.model.entity.UserInterfaceInfo;
 import com.cz.project.common.ErrorCode;
 import com.cz.project.constant.CommonConstant;
 import com.cz.project.constant.UserConstant;
 import com.cz.project.mapper.UserMapper;
 import com.cz.project.model.vo.LoginUserVO;
 import com.cz.project.model.vo.UserVO;
+import com.cz.project.service.InterfaceInfoService;
+import com.cz.project.service.UserInterfaceInfoService;
 import com.cz.project.service.UserService;
 import com.cz.project.exception.BusinessException;
 import com.cz.project.model.dto.user.UserQueryRequest;
@@ -20,6 +24,7 @@ import com.cz.project.utils.SqlUtils;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
@@ -42,6 +47,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 盐值，混淆密码
      */
     private static final String SALT = "yupi";
+
+    @Resource
+    InterfaceInfoService interfaceInfoService;
+
+
+    @Resource
+    UserInterfaceInfoService userInterfaceInfoService;
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -82,7 +94,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             if (!saveResult) {
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库错误");
             }
+            // 5.注册成功后分配调用次数
+            allocationInterfaceInfoCounts(userAccount);
             return user.getId();
+        }
+    }
+    @Override
+    public void allocationInterfaceInfoCounts(String userAccount) {
+        QueryWrapper<User> qw = new QueryWrapper<>();
+        qw.eq("userAccount",userAccount);
+        Long userId = this.getOne(qw).getId();
+        List<InterfaceInfo> interfaceInfoList = interfaceInfoService.list();
+        // id集合
+        List<Long> idList = interfaceInfoList.stream()
+                .map(InterfaceInfo::getId)
+                .collect(Collectors.toList());
+        // status 集合
+        List<Integer> statusList = interfaceInfoList.stream()
+                .map(InterfaceInfo::getStatus)
+                .collect(Collectors.toList());
+        for (int i = 0;i < idList.size();i++){
+            // 为每个新注册的用户分配100次调用次数
+            UserInterfaceInfo userInterfaceInfo = new UserInterfaceInfo();
+            userInterfaceInfo.setUserId(userId);
+            userInterfaceInfo.setInterfaceInfoId(idList.get(i));
+            userInterfaceInfo.setStatus(statusList.get(0));
+            userInterfaceInfo.setTotalNum(0);
+            userInterfaceInfo.setLeftNum(100);
+            userInterfaceInfoService.save(userInterfaceInfo);
         }
     }
 

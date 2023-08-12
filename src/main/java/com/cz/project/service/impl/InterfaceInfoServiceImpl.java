@@ -1,15 +1,25 @@
 package com.cz.project.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 
 import com.cz.czapicommon.model.entity.InterfaceInfo;
+import com.cz.czapicommon.model.entity.User;
+import com.cz.czapicommon.model.entity.UserInterfaceInfo;
 import com.cz.project.common.ErrorCode;
 import com.cz.project.mapper.InterfaceInfoMapper;
 import com.cz.project.exception.BusinessException;
 import com.cz.project.exception.ThrowUtils;
 import com.cz.project.service.InterfaceInfoService;
+import com.cz.project.service.UserInterfaceInfoService;
+import com.cz.project.service.UserService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
 * @author 李建伟llx
@@ -40,6 +50,7 @@ public class InterfaceInfoServiceImpl extends ServiceImpl<InterfaceInfoMapper, I
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "描述内容过长");
         }
     }
+
 
 }
 

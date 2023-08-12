@@ -38,6 +38,9 @@ public class LoginUserVO implements Serializable {
      */
     private String userRole;
 
+    private String accessKey;
+
+    private String secretKey;
     /**
      * 创建时间
      */
